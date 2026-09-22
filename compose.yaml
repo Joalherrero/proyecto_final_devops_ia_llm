@@ -1,0 +1,36 @@
+services:
+  django:
+    build:
+      context: ./django_app
+      dockerfile: Containerfile
+    environment:
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-solo-laboratorio-cambiar-antes-de-publicar}
+      DJANGO_ALLOWED_HOSTS: 127.0.0.1,localhost
+      TRIAGE_URL: http://triage:8001/triage
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - django_data:/data
+    depends_on:
+      - triage
+
+  triage:
+    build:
+      context: ./triage_service
+      dockerfile: Containerfile
+    environment:
+      OLLAMA_URL: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:3b}
+    volumes:
+      - ./runbooks:/runbooks:ro
+    depends_on:
+      - ollama
+
+  ollama:
+    image: docker.io/ollama/ollama:latest
+    volumes:
+      - ollama_data:/root/.ollama
+
+volumes:
+  django_data:
+  ollama_data:

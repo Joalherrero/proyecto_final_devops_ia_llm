@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Laboratorio DevOps + IA</title>
+  <style>
+    body { max-width: 900px; margin: 2rem auto; padding: 0 1rem; font: 16px/1.5 system-ui, sans-serif; color: #17212b; }
+    h1, h2 { line-height: 1.2; }
+    article { border: 1px solid #cdd4da; border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
+    textarea { width: 100%; min-height: 5rem; box-sizing: border-box; }
+    button { padding: .5rem .8rem; cursor: pointer; }
+    code, pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+    .message { padding: .5rem; background: #eef4fc; }
+  </style>
+</head>
+<body>
+  <h1>Incidentes del servicio Django</h1>
+  <p>Genera un fallo de prueba o pega un log redactado. Después compara el diagnóstico por reglas con la explicación de Ollama.</p>
+  {% for message in messages %}<p class="message">{{ message }}</p>{% endfor %}
+
+  <form action="{% url 'create_demo' %}" method="post">
+    {% csrf_token %}<button type="submit">Crear fallo de importación de prueba</button>
+  </form>
+  <h2>Nuevo incidente manual</h2>
+  <form action="{% url 'create_custom' %}" method="post">
+    {% csrf_token %}
+    <label for="log">Log</label>
+    <textarea id="log" name="log" maxlength="5000" required></textarea>
+    <button type="submit">Guardar incidente</button>
+  </form>
+
+  <h2>Incidentes recientes</h2>
+  {% for incident in incidents %}
+    <article>
+      <h3>#{{ incident.pk }} · {{ incident.service }} · {{ incident.created_at }}</h3>
+      <pre>{{ incident.log }}</pre>
+      <form action="{% url 'diagnose' incident.pk %}" method="post">
+        {% csrf_token %}
+        <button name="mode" value="rules" type="submit">Diagnosticar con reglas</button>
+        <button name="mode" value="ollama" type="submit">Explicar con Ollama</button>
+      </form>
+      {% for diagnosis in incident.diagnoses.all %}
+        <h4>{{ diagnosis.category }} · {{ diagnosis.severity }} · {{ diagnosis.model_backend }}</h4>
+        <p>{{ diagnosis.summary }}</p>
+        <p><strong>Causa:</strong> {{ diagnosis.root_cause }}</p>
+        <p><strong>Siguiente paso:</strong> {{ diagnosis.suggested_fix }}</p>
+        <p><strong>Evidencia:</strong> {{ diagnosis.evidence|join:", " }}</p>
+      {% endfor %}
+    </article>
+  {% empty %}<p>Sin incidentes todavía.</p>{% endfor %}
+</body>
+</html>
