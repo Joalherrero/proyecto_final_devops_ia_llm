@@ -3,51 +3,67 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Laboratorio DevOps + IA</title>
+  <title>Control room · DevOps IA</title>
   <style>
-    body { max-width: 900px; margin: 2rem auto; padding: 0 1rem; font: 16px/1.5 system-ui, sans-serif; color: #17212b; }
-    h1, h2 { line-height: 1.2; }
-    article { border: 1px solid #cdd4da; border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
-    textarea { width: 100%; min-height: 5rem; box-sizing: border-box; }
-    button { padding: .5rem .8rem; cursor: pointer; }
-    code, pre { white-space: pre-wrap; overflow-wrap: anywhere; }
-    .message { padding: .5rem; background: #eef4fc; }
+    :root { --ink:#e8eef7; --muted:#91a0b5; --panel:#111a2b; --line:rgba(148,163,184,.18); --accent:#64e6c2; --accent-2:#7aa7ff; --bg:#080d18; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; color:var(--ink); background:radial-gradient(circle at 90% 0%,#182b46 0,transparent 36rem),var(--bg); font:15px/1.55 Inter,ui-sans-serif,system-ui,-apple-system,sans-serif; }
+    .shell { max-width:1120px; margin:0 auto; padding:32px 24px 60px; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:20px; margin-bottom:54px; }
+    .brand { display:flex; align-items:center; gap:12px; letter-spacing:.02em; font-weight:700; }
+    .brand-mark { display:grid; place-items:center; width:38px; height:38px; border:1px solid rgba(100,230,194,.45); border-radius:12px; color:var(--accent); background:rgba(100,230,194,.09); font-size:20px; }
+    .status { display:inline-flex; align-items:center; gap:8px; padding:7px 11px; border:1px solid var(--line); border-radius:999px; color:var(--muted); background:rgba(17,26,43,.72); font-size:12px; }
+    .status i { width:7px; height:7px; border-radius:50%; background:var(--accent); box-shadow:0 0 14px var(--accent); }
+    .hero { max-width:760px; margin-bottom:30px; }
+    .eyebrow { margin:0 0 12px; color:var(--accent); font-size:12px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; }
+    h1 { max-width:720px; margin:0; font-size:clamp(2.2rem,6vw,4.5rem); line-height:.98; letter-spacing:-.065em; }
+    .intro { max-width:650px; margin:20px 0 0; color:var(--muted); font-size:17px; }
+    .grid { display:grid; grid-template-columns:1fr .92fr; gap:18px; align-items:start; }
+    .panel { border:1px solid var(--line); border-radius:20px; padding:22px; background:linear-gradient(145deg,rgba(23,34,56,.9),rgba(13,20,34,.88)); box-shadow:0 18px 60px rgba(0,0,0,.18); }
+    .panel h2 { margin:0; font-size:17px; letter-spacing:-.02em; }
+    .panel-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; }
+    .hint { margin:4px 0 0; color:var(--muted); font-size:13px; }
+    .demo { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px; border:1px solid rgba(100,230,194,.22); border-radius:14px; background:rgba(100,230,194,.06); }
+    .demo strong { display:block; margin-bottom:3px; font-size:14px; }
+    .demo span { color:var(--muted); font-size:12px; }
+    label { display:block; margin-bottom:8px; color:#c8d4e5; font-size:13px; font-weight:600; }
+    textarea { display:block; width:100%; min-height:118px; resize:vertical; border:1px solid var(--line); border-radius:12px; padding:13px; color:var(--ink); background:#0a1221; font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace; }
+    textarea:focus-visible { outline:2px solid rgba(100,230,194,.3); border-color:var(--accent); }
+    button { min-height:40px; border:0; border-radius:10px; padding:10px 14px; color:#07131a; background:var(--accent); font:inherit; font-size:13px; font-weight:750; cursor:pointer; transition:transform .15s ease,filter .15s ease; }
+    button:hover { filter:brightness(1.08); transform:translateY(-1px); }
+    button:focus-visible { outline:3px solid rgba(122,167,255,.75); outline-offset:2px; }
+    button.secondary { color:#dbe7fa; background:rgba(122,167,255,.14); border:1px solid rgba(122,167,255,.35); }
+    .form-actions { display:flex; justify-content:flex-end; margin-top:12px; }
+    .message { margin:0 0 18px; padding:11px 14px; border:1px solid rgba(100,230,194,.3); border-radius:10px; color:#baf8e6; background:rgba(100,230,194,.08); }
+    .incidents { grid-column:1 / -1; }
+    .incident { margin-top:14px; padding:20px; border:1px solid var(--line); border-radius:16px; background:rgba(10,18,33,.7); }
+    .incident-head { display:flex; justify-content:space-between; gap:16px; align-items:baseline; }
+    .incident h3 { margin:0; font-size:15px; }
+    time { color:var(--muted); font-size:12px; }
+    pre { overflow:auto; margin:14px 0; padding:14px; border-radius:10px; color:#c6d5e9; background:#080e1a; font:12px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace; }
+    .diagnose-actions { display:flex; flex-wrap:wrap; gap:8px; }
+    .diagnosis { margin-top:18px; padding-top:17px; border-top:1px solid var(--line); }
+    .tag { display:inline-flex; align-items:center; gap:6px; margin-right:6px; padding:4px 9px; border-radius:999px; color:#c9d7ea; background:rgba(148,163,184,.12); font-size:11px; font-weight:700; }
+    .tag.severity { color:#ffd995; background:rgba(255,199,107,.12); }
+    .tag.backend { color:#b5d0ff; background:rgba(122,167,255,.13); }
+    .diagnosis p { margin:10px 0 0; color:#c2cede; }
+    .diagnosis strong { color:#eef5ff; }
+    .empty { color:var(--muted); text-align:center; padding:32px 0 12px; }
+    @media (max-width:760px) { .shell{padding:22px 16px 42px;} .topbar{margin-bottom:38px;} .grid{grid-template-columns:1fr;} .incidents{grid-column:auto;} .demo{align-items:flex-start; flex-direction:column;} h1{font-size:3rem;} }
   </style>
 </head>
 <body>
-  <h1>Incidentes del servicio Django</h1>
-  <p>Genera un fallo de prueba o pega un log redactado. Después compara el diagnóstico por reglas con la explicación de Ollama.</p>
-  {% for message in messages %}<p class="message">{{ message }}</p>{% endfor %}
-
-  <form action="{% url 'create_demo' %}" method="post">
-    {% csrf_token %}<button type="submit">Crear fallo de importación de prueba</button>
-  </form>
-  <h2>Nuevo incidente manual</h2>
-  <form action="{% url 'create_custom' %}" method="post">
-    {% csrf_token %}
-    <label for="log">Log</label>
-    <textarea id="log" name="log" maxlength="5000" required></textarea>
-    <button type="submit">Guardar incidente</button>
-  </form>
-
-  <h2>Incidentes recientes</h2>
-  {% for incident in incidents %}
-    <article>
-      <h3>#{{ incident.pk }} · {{ incident.service }} · {{ incident.created_at }}</h3>
-      <pre>{{ incident.log }}</pre>
-      <form action="{% url 'diagnose' incident.pk %}" method="post">
-        {% csrf_token %}
-        <button name="mode" value="rules" type="submit">Diagnosticar con reglas</button>
-        <button name="mode" value="ollama" type="submit">Explicar con Ollama</button>
-      </form>
-      {% for diagnosis in incident.diagnoses.all %}
-        <h4>{{ diagnosis.category }} · {{ diagnosis.severity }} · {{ diagnosis.model_backend }}</h4>
-        <p>{{ diagnosis.summary }}</p>
-        <p><strong>Causa:</strong> {{ diagnosis.root_cause }}</p>
-        <p><strong>Siguiente paso:</strong> {{ diagnosis.suggested_fix }}</p>
-        <p><strong>Evidencia:</strong> {{ diagnosis.evidence|join:", " }}</p>
-      {% endfor %}
-    </article>
-  {% empty %}<p>Sin incidentes todavía.</p>{% endfor %}
+  <main class="shell">
+    <nav class="topbar" aria-label="Cabecera"><div class="brand"><span class="brand-mark">⌁</span><span>DevOps IA / Control room</span></div><span class="status"><i></i> laboratorio local · operativo</span></nav>
+    <header class="hero"><p class="eyebrow">Diagnóstico de incidentes</p><h1>Entiende lo que ha fallado antes de tocar producción.</h1><p class="intro">Registra un log, contrástalo con el baseline de reglas y pide a Ollama una explicación contextual con los runbooks locales.</p></header>
+    {% for message in messages %}<p class="message" role="status">{{ message }}</p>{% endfor %}
+    <section class="grid" aria-label="Operaciones">
+      <article class="panel"><div class="panel-head"><div><h2>Incidente de laboratorio</h2><p class="hint">Genera un fallo controlado para recorrer el flujo completo.</p></div></div><form action="{% url 'create_demo' %}" method="post">{% csrf_token %}<div class="demo"><div><strong>Fallo de importación Python</strong><span>ModuleNotFoundError · severidad media</span></div><button type="submit">Crear incidente</button></div></form></article>
+      <article class="panel"><div class="panel-head"><div><h2>Nuevo incidente manual</h2><p class="hint">Pega un log ficticio o previamente redactado.</p></div></div><form action="{% url 'create_custom' %}" method="post">{% csrf_token %}<label for="log">Entrada de log</label><textarea id="log" name="log" maxlength="5000" aria-describedby="log-help" placeholder="Ej.: database connection refused from postgres" required></textarea><p id="log-help" class="hint">Máximo 5.000 caracteres · los secretos se redactan antes de guardar.</p><div class="form-actions"><button type="submit">Guardar incidente</button></div></form></article>
+      <article class="panel incidents"><div class="panel-head"><div><h2>Incidentes recientes</h2><p class="hint">Cada diagnóstico queda guardado para comparar reglas y modelo.</p></div><span class="tag">SQLite local</span></div>
+        {% for incident in incidents %}<section class="incident"><div class="incident-head"><h3>#{{ incident.pk }} · {{ incident.service }}</h3><time>{{ incident.created_at }}</time></div><pre>{{ incident.log }}</pre><div class="diagnose-actions"><form action="{% url 'diagnose' incident.pk %}" method="post">{% csrf_token %}<button class="secondary" name="mode" value="rules" type="submit">Diagnosticar con reglas</button></form><form action="{% url 'diagnose' incident.pk %}" method="post">{% csrf_token %}<button name="mode" value="ollama" type="submit">Explicar con Ollama</button></form></div>{% for diagnosis in incident.diagnoses.all %}<div class="diagnosis"><span class="tag">{{ diagnosis.category }}</span><span class="tag severity">{{ diagnosis.severity }}</span><span class="tag backend">{{ diagnosis.model_backend }}</span><p>{{ diagnosis.summary }}</p><p><strong>Causa:</strong> {{ diagnosis.root_cause }}</p><p><strong>Siguiente paso:</strong> {{ diagnosis.suggested_fix }}</p><p><strong>Evidencia:</strong> {{ diagnosis.evidence|join:", " }}</p></div>{% endfor %}</section>{% empty %}<p class="empty">Todavía no hay incidentes. Crea el primero arriba.</p>{% endfor %}
+      </article>
+    </section>
+  </main>
 </body>
 </html>

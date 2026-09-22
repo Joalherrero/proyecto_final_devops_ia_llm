@@ -4,6 +4,12 @@ Este laboratorio convierte las prácticas de `pta-ai-devops/finetuning/` en una 
 
 Lee primero el [diagrama de arquitectura](docs/arquitectura.md).
 
+## Captura del laboratorio
+
+La siguiente captura muestra un incidente manual de conexión a PostgreSQL y la comparación entre el diagnóstico determinista (`rules`) y la explicación contextual (`rules+ollama`):
+
+![Dashboard local con comparación de reglas y Ollama](docs/images/incidente-comparativa.png)
+
 ## La idea en 60 segundos
 
 ```mermaid
