@@ -1,6 +1,6 @@
 # Proyecto final: diagnóstico local de incidentes Django
 
-Este laboratorio convierte las prácticas de `pta-ai-devops/finetuning/` en una aplicación que puedes estudiar de principio a fin. Django genera o registra incidentes, un servicio FastAPI los clasifica y Ollama puede explicar el resultado con un modelo local. Todo está definido para **Podman Compose**, pero **no he construido imágenes ni arrancado contenedores**.
+Este laboratorio convierte las prácticas de `pta-ai-devops/finetuning/` en una aplicación que puedes estudiar de principio a fin. Django genera o registra incidentes, un servicio FastAPI los clasifica y Ollama puede explicar el resultado con un modelo local. Todo está definido para **Podman Compose** y validado localmente con el perfil de reglas y con `llama3.2:3b`.
 
 Lee primero el [diagrama de arquitectura](docs/arquitectura.md).
 
@@ -83,7 +83,7 @@ El número de partición (`4`) y el dispositivo (`/dev/vda`) son específicos de
 
 ## Cómo probarlo localmente
 
-Estas son instrucciones para ti; no se han ejecutado en esta tarea.
+Estas son las instrucciones reproducibles para tu laboratorio local.
 
 ```bash
 cd proyecto_final_devops_ia_llm
@@ -165,6 +165,26 @@ Para parar los servicios sin borrar los datos:
 podman-compose -f compose.yaml down
 ```
 
+## Cómo comparar reglas y Ollama
+
+Usa el mismo incidente y ejecuta primero **Diagnosticar con reglas** y después **Explicar con Ollama**. Compara estos campos:
+
+| Campo | Reglas | Ollama |
+| --- | --- | --- |
+| `category` | La decide `triage_with_rules()` mediante patrones de texto. | Se conserva la categoría de las reglas. |
+| `severity` | La decide el baseline (`low`, `medium`, `high` o `critical`). | Se conserva la gravedad de las reglas. |
+| `summary` | Texto fijo y reproducible. | Se conserva el resumen del baseline. |
+| `root_cause` | Explicación fija asociada a la regla. | Texto generado por el modelo con el log, la categoría y el runbook. |
+| `suggested_fix` | Recomendación fija y auditable. | Se conserva la recomendación del baseline. |
+| `model_backend` | `rules`. | `rules+ollama`. |
+
+Ejemplo observado con `ModuleNotFoundError: No module named requests`:
+
+- Reglas: categoría `python_import_error`, gravedad `medium` y causa genérica sobre `PYTHONPATH`, estructura de paquetes y dependencias.
+- Ollama: la misma categoría y gravedad, pero explica que `requests` probablemente no está instalado y propone comprobar la imagen activa.
+
+La comparación enseña qué aporta cada capa: las reglas ofrecen control, repetibilidad y una salida segura; Ollama aporta redacción contextual. Si el modelo falla o no está disponible, el diagnóstico por reglas sigue siendo el resultado de referencia.
+
 ## Qué aprenderás al recorrer el código
 
 1. **Django:** `incidents/models.py` define un incidente y sus diagnósticos; `views.py` crea el fallo de prueba, redacta valores sensibles y hace la llamada HTTP. La plantilla muestra ambos resultados.
@@ -204,7 +224,7 @@ Cada flecha debe producir una comparación medible. Conserva una tabla con categ
 - El modo Ollama puede tardar o devolver `503` si el modelo no se ha descargado o no está listo. El modo de reglas sigue disponible.
 - La vista hace la petición de diagnóstico de forma síncrona. Para una aplicación con tráfico real, moverías este trabajo a una cola y añadirías autenticación, límites y monitorización.
 - Esta primera versión **no es todavía un agente** ni incluye fine tuning. Separa intencionadamente baseline, explicación y futuro agente para poder medir qué aporta cada pieza.
-- No se han ejecutado pruebas de integración con contenedores; la definición de Compose y los módulos Python se pueden validar sin arrancarlos.
+- La integración local se ha probado con los servicios levantados, el modelo `llama3.2:3b` descargado y una petición real en ambos modos. La primera inferencia de Ollama puede ser más lenta porque carga el modelo en memoria.
 
 ## Fuentes oficiales
 
