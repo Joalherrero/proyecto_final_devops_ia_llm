@@ -1,6 +1,6 @@
 # Arquitectura del laboratorio
 
-El proyecto ejecuta tres servicios en una red privada de Podman Compose. **Los archivos están preparados; ningún contenedor se ha arrancado.** La primera versión funciona con reglas sin descargar un modelo. Ollama se añade al recorrido cuando eliges «Explicar con Ollama» y has descargado el modelo indicado en `.env`.
+El proyecto define tres servicios en una red privada de Podman Compose. Django y triage forman la ruta base; Ollama está en el perfil opcional `llm`. Así puedes practicar el sistema determinista sin descargar un modelo grande y añadir inferencia local después.
 
 ```mermaid
 flowchart LR
@@ -32,6 +32,23 @@ flowchart LR
 2. **Diagnosticar con reglas:** Django envía el log a `triage:8001`. FastAPI usa una copia de `triage_core/rules.py` del curso, busca un runbook según la categoría y devuelve JSON. Django guarda un `Diagnosis`.
 3. **Explicar con Ollama:** se calcula la misma categoría y gravedad por reglas; Ollama genera una explicación en español usando el log y el runbook. La explicación reemplaza únicamente `root_cause`. **Esto es una ampliación con LLM, todavía no un agente que elige herramientas.**
 
+## Estados durante una prueba
+
+```mermaid
+stateDiagram-v2
+    [*] --> Pendiente: Incident guardado
+    Pendiente --> Clasificando: POST /triage
+    Clasificando --> ReglaLista: baseline calculado
+    ReglaLista --> Guardado: modo rules
+    ReglaLista --> EsperandoModelo: modo ollama
+    EsperandoModelo --> Guardado: explicación recibida
+    EsperandoModelo --> ErrorRecuperable: Ollama no listo / timeout
+    ErrorRecuperable --> Pendiente: reintentar más tarde
+    Guardado --> [*]
+```
+
+El `503` del modo Ollama es recuperable: no borra el incidente y permite volver a probarlo cuando el modelo esté descargado. En una versión con cola de trabajos, este estado se convertiría en una tarea asíncrona en vez de bloquear la petición web.
+
 ## Contenedores y límites
 
 | Servicio | Imagen | Puerto | Persistencia | Responsabilidad |
@@ -40,7 +57,7 @@ flowchart LR
 | `triage` | Construida con `triage_service/Containerfile` | `8001` solo en la red interna | `runbooks/` montado en lectura | Clasificación, consulta de runbooks y llamada opcional a Ollama. |
 | `ollama` | `docker.io/ollama/ollama:latest` | `11434` solo en la red interna | `ollama_data` | Inferencia local cuando se solicite. |
 
-La red permite resolver los nombres `triage` y `ollama` desde otros contenedores. No se monta el socket de Podman en ninguno. Las imágenes Python se construyen con contextos limitados a sus carpetas. La implementación base es un **laboratorio local**: Django usa SQLite y Gunicorn en un único contenedor; no incluye autenticación ni una cola de trabajos.
+La red permite resolver los nombres `triage` y `ollama` desde otros contenedores cuando el perfil `llm` está activo. No se monta el socket de Podman en ninguno. Las imágenes Python se construyen con contextos limitados a sus carpetas. La implementación base es un **laboratorio local**: Django usa SQLite y Gunicorn en un único contenedor; no incluye autenticación ni una cola de trabajos.
 
 ## Secuencia de evolución
 
