@@ -7,4 +7,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 RUN mkdir -p /data
 EXPOSE 8000
-CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:8000"]
+# Gunicorn must allow enough time for the first local Ollama inference to load
+# the model into memory. Keep it configurable for slower or faster machines.
+CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:8000 --timeout ${GUNICORN_TIMEOUT:-180}"]

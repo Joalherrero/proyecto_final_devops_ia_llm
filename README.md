@@ -159,6 +159,8 @@ podman-compose -f compose.yaml --profile llm exec ollama ollama list
 podman-compose -f compose.yaml --profile llm logs triage
 ```
 
+Django ejecuta Gunicorn con un timeout de 180 segundos para permitir esa primera inferencia local. Si tu equipo tarda más, puedes reconstruir Django con otro valor, por ejemplo `GUNICORN_TIMEOUT=300`.
+
 Para parar los servicios sin borrar los datos:
 
 ```bash
@@ -222,6 +224,7 @@ Cada flecha debe producir una comparación medible. Conserva una tabla con categ
 
 - La redacción de secretos en `incidents/views.py` es **básica**; usa solo logs ficticios o previamente revisados. No envíes incidentes reales con credenciales.
 - El modo Ollama puede tardar o devolver `503` si el modelo no se ha descargado o no está listo. El modo de reglas sigue disponible.
+- Si el navegador muestra `Internal Server Error` y en los logs aparece `WORKER TIMEOUT`, revisa que Django esté usando el `Containerfile` actual, reconstruye la imagen y comprueba que `GUNICORN_TIMEOUT` sea suficiente para la primera carga del modelo.
 - La vista hace la petición de diagnóstico de forma síncrona. Para una aplicación con tráfico real, moverías este trabajo a una cola y añadirías autenticación, límites y monitorización.
 - Esta primera versión **no es todavía un agente** ni incluye fine tuning. Separa intencionadamente baseline, explicación y futuro agente para poder medir qué aporta cada pieza.
 - La integración local se ha probado con los servicios levantados, el modelo `llama3.2:3b` descargado y una petición real en ambos modos. La primera inferencia de Ollama puede ser más lenta porque carga el modelo en memoria.
