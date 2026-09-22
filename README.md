@@ -62,6 +62,25 @@ La copia de `triage_core/` procede de `../pta-ai-devops/finetuning/triage_core/`
 - Conexión a Internet para descargar las imágenes y, si usas Ollama, el modelo. La clasificación por reglas no llama a ningún proveedor de IA.
 - Memoria suficiente para el modelo que elijas; empieza con uno pequeño y ajusta la memoria de Podman machine según tu equipo.
 
+### Comprobar el espacio real de Podman
+
+`podman machine list` muestra el tamaño del disco virtual configurado, pero no necesariamente el tamaño de la partición Linux que usa el almacenamiento de imágenes. Para revisar ambos valores:
+
+```bash
+podman machine inspect podman-machine-default
+podman machine ssh podman-machine-default 'df -h /; lsblk -o NAME,SIZE,FSTYPE,MOUNTPOINTS'
+```
+
+En macOS con la máquina `applehv`, si el disco virtual es mayor que `/dev/vda4` y el sistema de archivos es XFS, la ampliación se puede hacer dentro de la VM con `growpart` y `xfs_growfs`. Hazlo solo después de comprobar los dispositivos y con los contenedores detenidos:
+
+```bash
+podman machine stop
+podman machine start
+podman machine ssh podman-machine-default 'sudo growpart /dev/vda 4 && sudo xfs_growfs / && df -h /'
+```
+
+El número de partición (`4`) y el dispositivo (`/dev/vda`) son específicos de la máquina de este laboratorio; comprueba `lsblk` antes de reutilizar el comando en otra VM. La ampliación aumenta el espacio disponible y no elimina imágenes, volúmenes ni contenedores.
+
 ## Cómo probarlo localmente
 
 Estas son instrucciones para ti; no se han ejecutado en esta tarea.
@@ -132,6 +151,13 @@ podman-compose -f compose.yaml --profile llm exec ollama ollama pull llama3.2:3b
 ```
 
 Después pulsa **Explicar con Ollama** en Django. Si cambias `OLLAMA_MODEL`, descarga ese modelo y recrea `triage` para que lea la variable nueva. Esta versión usa el modelo para redactar la causa, pero conserva categoría y gravedad del baseline por reglas; aún no implementa selección autónoma de herramientas.
+
+La primera petición puede tardar porque Ollama carga los pesos en memoria. Si triage devuelve `503` durante esa primera carga, espera a que `ollama list` muestre el modelo y vuelve a pulsar el botón:
+
+```bash
+podman-compose -f compose.yaml --profile llm exec ollama ollama list
+podman-compose -f compose.yaml --profile llm logs triage
+```
 
 Para parar los servicios sin borrar los datos:
 
